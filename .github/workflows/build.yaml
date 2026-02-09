@@ -1,0 +1,31 @@
+name: build
+
+on: push
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-node@v6.2.0
+        with:
+          cache: yarn
+          node-version: 24.13.0
+      - run: yarn install --frozen-lockfile --production
+      - run: |
+          tar --create \
+            --gzip \
+            --file APProxy.tar.gz \
+            node_modules provider index.ts package.json types.ts
+      - uses: actions/upload-artifact@v6.0.0
+        if: github.ref_type == 'branch'
+        with:
+          path: APProxy.tar.gz
+      - uses: softprops/action-gh-release@v2.5.0
+        if: github.ref_type == 'tag'
+        with:
+          files: APProxy.tar.gz
+          generate_release_notes: true
